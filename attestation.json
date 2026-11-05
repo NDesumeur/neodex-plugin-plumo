@@ -1,0 +1,9 @@
+{
+  "pluginId": "neodex.plumo",
+  "repo": "NDesumeur/neodex-plugin-plumo",
+  "version": "1.0.0",
+  "sha256": "bd9202996c14637a22686e99ba1323fe4ab1d085efcc7caf0274fa68724f4546",
+  "approvedAt": "2026-11-05T09:31:21.122Z",
+  "neobase": ">=4.0.0",
+  "signature": "uCYXnG95ac7R18gUQwcbc5V/OgRJPf29yzQKDW1ww1TV9cQn2Wfv5BR+mx+kmIUKAvw6ZmvWBYAVVKgMxe5ZDw=="
+}

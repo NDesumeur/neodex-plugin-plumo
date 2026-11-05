@@ -1,0 +1,20 @@
+{
+  "id": "neodex.plumo",
+  "name": "Plumo",
+  "version": "1.0.0",
+  "author": "NDesumeur",
+  "description": "Un petit oiseau à faire voler entre les colonnes : un battement à chaque clic. Le ciel change avec ton score, des médailles à gagner.",
+  "icon": "icon.png",
+  "entry": "index.js",
+  "view": "plumo",
+  "neobase": ">=4.0.0",
+  "type": "app",
+  "category": "Jeux",
+  "mobile": false,
+  "system": false,
+  "dependencies": {},
+  "sdk": "2.1.0",
+  "permissions": [
+    "storage"
+  ]
+}
