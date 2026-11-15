@@ -25,6 +25,19 @@ Le décor change tous les 25 points : jour, soir, nuit étoilée puis aube, et l
 
 À la fin de chaque partie, une médaille selon ton score : **bronze** à 10 points, **argent** à 25, **or** à 50, **platine** à 100. Le panneau des médailles compte combien tu en as gagné de chaque sorte.
 
+## Après 50 points
+
+- Certaines **colonnes bougent** de haut en bas (deux petits traits blancs les signalent).
+- Des **rafales de vent** soufflent de temps en temps : « RAFALE » s'affiche en jaune une seconde avant, puis le vent pousse l'oiseau vers le haut (↑) ou vers le bas (↓) pendant deux à trois secondes.
+
+## Oiseaux
+
+Chaque médaille gagnée au moins une fois débloque un oiseau : **Rougegorge** (bronze), **Mésange** (argent), **Flamant** (or) et **Phénix** (platine, avec sa traîne de feu). On le choisit dans la case **Oiseaux** ; **Plumo** reste disponible.
+
+## Manette et plein écran
+
+À la manette : **A**, **B**, la croix ou le stick vers le haut pour battre des ailes, **Start** pour la pause. Le bouton **Plein écran** agrandit le ciel à tout l'écran (Échap pour en sortir) ; hors plein écran, le jeu prend toute la hauteur de la fenêtre.
+
 ## Statistiques
 
 Meilleur score, nombre de parties et battements d'ailes au total.

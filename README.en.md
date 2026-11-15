@@ -25,6 +25,19 @@ The scenery changes every 25 points: day, evening, starry night, then dawn, and 
 
 At the end of each game, a medal based on your score: **bronze** at 10 points, **silver** at 25, **gold** at 50, **platinum** at 100. The medals panel counts how many of each kind you have earned.
 
+## After 50 points
+
+- Some **columns move** up and down (two small white marks show them).
+- **Gusts of wind** blow from time to time: "GUST" shows in yellow one second before, then the wind pushes the bird up (↑) or down (↓) for two to three seconds.
+
+## Birds
+
+Each medal won at least once unlocks a bird: **Robin** (bronze), **Blue tit** (silver), **Flamingo** (gold) and **Phoenix** (platinum, with its trail of fire). Pick it in the **Birds** box; **Plumo** stays available.
+
+## Gamepad and full screen
+
+With a gamepad: **A**, **B**, the d-pad or the stick up to flap, **Start** to pause. The **Full screen** button fills the whole screen with the sky (Escape to leave); otherwise the game takes the full height of the window.
+
 ## Statistics
 
 Best score, number of games and total wing flaps.

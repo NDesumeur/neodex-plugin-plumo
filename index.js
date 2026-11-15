@@ -1,22 +1,28 @@
 // Plumo : Un petit oiseau à faire voler entre les colonnes : un battement à chaque clic. Le ciel change avec ton score, des médailles à gagner.
 // Jeu NeoDex en pixel art dessiné à la main (police bitmap, cadres et boutons en pixels). Il tourne dans le bac à sable de NeoDex.
 const HTML = `<div class="appWrap wide">
-  <div class="agHead"><span class="label">Plumo</span><span class="hint">Clic, espace ou ↑ : battre des ailes · P : pause</span></div>
+  <div class="agHead"><span class="label">Plumo</span><span class="hint">Clic, espace, ↑ ou A (manette) : battre des ailes · P ou Start : pause</span></div>
   <div class="gMain"><div class="gameBox"><canvas id="plCanvas" width="216" height="288"></canvas></div>
     <div class="gSide">
       <div class="sysCard"><b>RECORDS</b><div class="gStats" id="plStats"></div></div>
       <div class="sysCard"><b>MÉDAILLES</b><div class="row" id="plMedals"></div></div>
-      <div class="row"><button class="btn main" id="plNew">NOUVELLE PARTIE</button></div>
+      <div class="sysCard"><b>OISEAUX</b><div class="plBirds" id="plBirds"></div></div>
+      <div class="row"><button class="btn main" id="plNew">NOUVELLE PARTIE</button><button class="btn" id="plFs">PLEIN ÉCRAN</button></div>
     </div></div>
 </div>`;
 const CSS = `.gMain{display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap}
-.gameBox{display:grid;place-items:center;padding:10px;background:#05010b;flex:2;min-width:320px;position:relative}
+.gameBox{display:grid;place-items:center;padding:10px;background:#05010b;flex:1 1 360px;min-width:min(100%,320px);position:relative}
+.gameBox:fullscreen{padding:0}
+.gameBox:fullscreen canvas{width:min(100vw,calc(100vh * 216 / 288))}
 .gameBox canvas{width:100%;image-rendering:pixelated;cursor:var(--cp,pointer);touch-action:none}
 .gSide{display:flex;flex-direction:column;gap:14px;flex:1;min-width:250px;max-width:420px}
 .gSide .sysCard{display:flex;flex-direction:column}
 .gStats{display:grid;grid-template-columns:1fr auto;gap:4px 14px}
 .gStats b{text-align:right}
-.gameBox canvas{max-width:460px;aspect-ratio:216/288}
+.gameBox canvas{width:min(100%,max(280px,calc((100vh - 170px) * 216 / 288)));height:auto;aspect-ratio:216/288}
+.plBirds{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px}
+.plBirds button{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;font-size:13px;line-height:1.2}
+.plBirds canvas{width:48px;height:36px;image-rendering:pixelated}
 #plMedals canvas{width:48px;height:48px;image-rendering:pixelated}`;
 /* ---------- l'habillage pixel art, dessiné à la main : police bitmap (accents compris), cadres, boutons, icônes ----------
    Tout est en pixels pleins, agrandis par 2 sans lissage : aucun dégradé, aucune ombre floue. */
@@ -294,7 +300,7 @@ export default async function (ctx) {
   tile: ['................', '...:............', '................', '..........+.....', '................', '................', '.....:..........', '................',
     '................', '.............:..', '................', '..+.............', '................', '.........:......', '................', '................'] },
   emblem: ['....kkkkk......', '..kkggggskk....', '.kggggggwwk....', '.kgggggggwkwk..', 'kggggggggwwwk..', 'kwwwgggggooooo.', 'kwwwwggggkoook.', '.kwwwgggggkkk..', '.kggggggggk....', '..kkggggskk....', '....kkkkk......'],
-  icons: [[/^NOUVELLE/, 'play'], [/^RECORDS/, 'crown'], [/^MÉDAILLES/, 'star']] });
+  icons: [[/^NOUVELLE/, 'play'], [/^PLEIN/, 'full'], [/^RECORDS/, 'crown'], [/^MÉDAILLES/, 'star'], [/^OISEAUX/, 'star']] });
   const $ = id => view.querySelector('#' + id) || document.getElementById(id);
   const doc = async n => { try { return await folder.read(n); } catch { return null; } };
   const games = { best: {}, ...(await doc('games')) };
@@ -329,14 +335,24 @@ const clock = s => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStar
 const PL = {W: 216, H: 288, GROUND: 252, G: .16, FLAP: -3.15, VMAX: 5, GAP0: 92, GAPMIN: 66, SPEED0: 1.25, SPACING: 92, PW: 26};
 const PL_MED = [[100, 'platine', ['#e8f4ff', '#9fc8e8', '#5a7fa8']], [50, 'or', ['#fff0a8', '#ffcf3a', '#a8780a']], [25, 'argent', ['#ffffff', '#c8ccd8', '#7a7f92']], [10, 'bronze', ['#ffc89a', '#d0844a', '#7a4a1f']]];
 const pls = gstore('plumo', {games: 0, flaps: 0, medals: {}});
+pls.bird ??= 0;
 let pl = null;
 const BIRD = [  // 3 images d'ailes ; k contour, y corps, w ventre et œil, o bec, e pupille
   ['....kkkkk...', '..kkyyyykk..', '.kyyyyywwek.', 'kkkyyyywwwk.', 'kwwwkyyyyoook', 'kwwwkyyykoook', '.kkkyyyyykkk.', '..kyyyyyyk...', '...kkkkkk....'],
   ['....kkkkk...', '..kkyyyykk..', '.kyyyyywwek.', 'kyyyyyywwwk.', 'kkkkkyyyyoook', 'kwwwwkyykoook', '.kwwwkyyykkk.', '..kkkyyyyk...', '...kkkkkk....'],
   ['....kkkkk...', '..kkyyyykk..', '.kkkyyywwek.', 'kwwwkyywwwk.', 'kwwwkyyyyoook', 'kkkkyyyykoook', '.kyyyyyyykkk.', '..kyyyyyyk...', '...kkkkkk....']];
-const BIRD_PAL = {k: '#2a1408', y: '#ffcf3a', w: '#ffffff', o: '#ff6a2a', e: '#2a1408'};
+const BIRDS = [
+  {name: 'Plumo', need: null, pal: {k: '#2a1408', y: '#ffcf3a', w: '#ffffff', o: '#ff6a2a', e: '#2a1408'}},
+  {name: 'Rougegorge', need: 'bronze', pal: {k: '#2a1408', y: '#a86a3a', w: '#ff6a3a', o: '#3a2a1a', e: '#2a1408'}},
+  {name: 'Mésange', need: 'argent', pal: {k: '#0e1a32', y: '#3f7aff', w: '#fff07a', o: '#2a2a3a', e: '#0e1a32'}},
+  {name: 'Flamant', need: 'or', pal: {k: '#3a0e22', y: '#ff8ac8', w: '#ffd8ec', o: '#2a1420', e: '#3a0e22'}},
+  {name: 'Phénix', need: 'platine', pal: {k: '#3a0806', y: '#ff5a2a', w: '#ffe07a', o: '#fff4c8', e: '#3a0806'}, glow: true},
+];
+const plBirdOk = b => !b.need || !!pls.medals[b.need];
+let BIRD_PAL = BIRDS[0].pal;
 function plNew() {
-  pl = Object.assign(pl || {tick: 0, raf: 0}, {seen: pl ? pl.tick : 0, mode: 'ready', y: 120, v: 0, rot: 0, pipes: [], score: 0, dist: 0, flash: 0, dead: 0, record: false, fl: 0});
+  pl = Object.assign(pl || {tick: 0, raf: 0}, {seen: pl ? pl.tick : 0, mode: 'ready', y: 120, v: 0, rot: 0, pipes: [], score: 0, dist: 0, flash: 0, dead: 0, record: false, fl: 0, wind: 0, windA: 0, windT: 0, windNext: 480, gusts: []});
+  BIRD_PAL = (plBirdOk(BIRDS[pls.bird] || BIRDS[0]) ? BIRDS[pls.bird] : BIRDS[0]).pal;
 }
 function plGap() { return Math.max(PL.GAPMIN, PL.GAP0 - pl.score * .6); }
 function plSpeed() { return PL.SPEED0 + Math.min(1, pl.score / 60) * .7; }
@@ -347,7 +363,8 @@ function plFlap() {
   pl.v = PL.FLAP; pl.fl = 10; pls.flaps++; plBeep(520, .05);
 }
 let plac = null;
-function plBeep(f, d, type = 'square', slide = 0) { try { plac ??= new AudioContext(); const o = plac.createOscillator(), g = plac.createGain(), t = plac.currentTime; o.type = type; o.frequency.setValueAtTime(f, t); if (slide) o.frequency.exponentialRampToValueAtTime(slide, t + d); g.gain.setValueAtTime(.05, t); g.gain.exponentialRampToValueAtTime(.0001, t + d); o.connect(g).connect(plac.destination); o.start(t); o.stop(t + d + .02); } catch {} }
+let plMute = false;
+function plBeep(f, d, type = 'square', slide = 0) { if (plMute) return; try { plac ??= new AudioContext(); const o = plac.createOscillator(), g = plac.createGain(), t = plac.currentTime; o.type = type; o.frequency.setValueAtTime(f, t); if (slide) o.frequency.exponentialRampToValueAtTime(slide, t + d); g.gain.setValueAtTime(.05, t); g.gain.exponentialRampToValueAtTime(.0001, t + d); o.connect(g).connect(plac.destination); o.start(t); o.stop(t + d + .02); } catch {} }
 function plHit() {
   if (pl.mode !== 'play') return;
   pl.mode = 'over'; pl.flash = 8; pl.dead = 0; plBeep(300, .3, 'sawtooth', 60);
@@ -360,12 +377,17 @@ function plUpdate() {
   if (pl.mode === 'ready') { pl.y = 120 + Math.sin(pl.tick / 12) * 4; pl.dist += 1; return; }
   if (pl.mode === 'over') { pl.dead++; if (pl.y < PL.GROUND - 10) { pl.v = Math.min(PL.VMAX + 2, pl.v + PL.G * 1.5); pl.y += pl.v; } return; }
   const sp = plSpeed(); pl.dist += sp;
-  pl.v = Math.min(PL.VMAX, pl.v + PL.G); pl.y += pl.v; if (pl.y < 4) { pl.y = 4; pl.v = 0; }
+  if (pl.score >= 50) {  // le vent : une rafale de 2 à 3 s toutes les 6 à 10 s, annoncée une seconde avant
+    if (pl.windA > 0) pl.windA--; else if (pl.windT > 0) { if (--pl.windT === 0) pl.wind = 0; } else if (--pl.windNext <= 0) { pl.wind = Math.random() < .5 ? -1 : 1; pl.windA = 60; pl.windT = 120 + Math.floor(Math.random() * 60); pl.windNext = 360 + Math.floor(Math.random() * 240); plBeep(200, .5, 'triangle', pl.wind < 0 ? 400 : 100); }
+  }
+  const blow = !pl.windA && pl.windT > 0 ? pl.wind * .055 : 0;  // la première seconde n'est que l'annonce
+  pl.v = Math.min(PL.VMAX, pl.v + PL.G + blow); pl.y += pl.v; if (pl.y < 4) { pl.y = 4; pl.v = 0; }
   pl.rot = Math.max(-.45, Math.min(1.2, pl.v / 4));
   const last = pl.pipes.at(-1);
-  if (!last || last.x < PL.W - PL.SPACING) { const gap = plGap(), top = 30 + Math.random() * (PL.GROUND - 60 - gap); pl.pipes.push({x: PL.W + 4, top, gap, done: false, kind: Math.random() < .5 ? 0 : 1}); }
+  if (!last || last.x < PL.W - PL.SPACING) { const gap = plGap(), top = 30 + Math.random() * (PL.GROUND - 60 - gap); pl.pipes.push({x: PL.W + 4, top, base: top, gap, done: false, kind: Math.random() < .5 ? 0 : 1, mv: pl.score >= 50 && Math.random() < .45 ? 14 + Math.random() * 10 : 0, ph: Math.random() * 6}); }
   for (const p of pl.pipes) {
     p.x -= sp;
+    if (p.mv) p.top = Math.max(26, Math.min(PL.GROUND - 26 - p.gap, p.base + Math.sin(pl.dist / 40 + p.ph) * p.mv));  // une colonne qui bouge
     if (!p.done && p.x + PL.PW < 52) { p.done = true; pl.score++; plBeep(880, .08, 'square', 1320); if (pl.score % 25 === 0) plBeep(660, .3, 'triangle', 1320); }
     if (p.x < 64 && p.x + PL.PW > 44 && (pl.y - 9 < p.top || pl.y + 9 > p.top + p.gap)) plHit();  // la boîte de l'oiseau est un peu plus petite que son dessin
   }
@@ -396,12 +418,19 @@ function plDraw() {
   for (let i = 0; i < 5; i++) { const x = ((i * 67 - d * .15) % (W + 60) + W + 60) % (W + 60) - 40, y = 20 + (i * 29) % 70; for (const [a, b, w, h] of [[0, 4, 30, 6], [6, 0, 16, 10], [18, 2, 10, 8]]) px(g, s.cloud, x + a, y + b, w, h); }
   for (let x = 0; x < W; x += 2) { const h = 24 + Math.sin((x + d * .3) / 23) * 10 + Math.sin((x + d * .3) / 9) * 3; px(g, s.far, x, PL.GROUND - 18 - h, 2, h + 18); }
   for (let x = 0; x < W; x += 2) { const h = 12 + Math.sin((x + d * .6) / 17) * 6; px(g, s.hill2, x, PL.GROUND - h, 2, h); px(g, s.hill, x, PL.GROUND - h, 2, 2); }
-  for (const p of pl.pipes) { plPipe(g, p.x, 0, p.top, 'top', p.kind); plPipe(g, p.x, p.top + p.gap, PL.GROUND - p.top - p.gap, 'bottom', p.kind); }
+  for (const p of pl.pipes) { plPipe(g, p.x, 0, p.top, 'top', p.kind); plPipe(g, p.x, p.top + p.gap, PL.GROUND - p.top - p.gap, 'bottom', p.kind); if (p.mv) for (const yy of [p.top - 4, p.top + p.gap + 3]) px(g, '#ffffff', p.x + PL.PW / 2 - 1, yy, 2, 1); }
+  if (pl.wind) {  // la rafale : des traits qui filent, et l'annonce en haut
+    if (pl.mode === 'play' && !pl.windA && pl.tick % 2 === 0) pl.gusts.push({x: Math.random() * W, y: pl.wind < 0 ? PL.GROUND : 0, l: 8 + Math.random() * 10});
+    if (pl.windA || (pl.tick >> 3) % 2) PXK.fill(g, pl.wind < 0 ? '↑ RAFALE ↑' : '↓ RAFALE ↓', W / 2, 58, pl.windA ? '#ffcf3a' : '#ffffff', 1, 'center');
+  }
+  for (const q of pl.gusts) { q.y += pl.wind < 0 ? -5 : 5; q.x -= 1; px(g, 'rgba(255,255,255,.55)', q.x, q.y, 1, q.l); }
+  pl.gusts = pl.gusts.filter(q => q.y > -20 && q.y < PL.GROUND + 20);
   // le sol : herbe, terre, petites pierres qui défilent
   px(g, '#2a1408', 0, PL.GROUND, W, 1); px(g, '#7ee07a', 0, PL.GROUND + 1, W, 4); px(g, '#4fb85a', 0, PL.GROUND + 5, W, 2); px(g, '#c8925a', 0, PL.GROUND + 7, W, PL.H - PL.GROUND - 7);
   for (let x = -(d % 16); x < W; x += 16) { px(g, '#a8723a', x, PL.GROUND + 12, 6, 2); px(g, '#a8723a', x + 9, PL.GROUND + 22, 4, 2); px(g, '#4fb85a', x + 4, PL.GROUND + 5, 2, 2); }
   // l'oiseau, penché selon sa vitesse (rotation par pas de 1/8 de tour : reste net)
   const f = pl.mode === 'over' ? 1 : pl.fl > 5 ? 2 : pl.fl > 0 ? 0 : Math.floor(pl.tick / 8) % 3, r = Math.round(pl.rot * 4) / 4;
+  if (BIRD_PAL === BIRDS[4].pal && pl.mode !== 'over') for (let i = 1; i < 6; i++) px(g, i % 2 ? '#ffcf3a' : '#ff5a2a', 42 - i * 4 + ((pl.tick + i) % 3), pl.y - 1 + Math.sin(pl.tick / 4 + i) * 2, 3, 3);  // la traîne du phénix
   g.save(); g.translate(Math.round(54), Math.round(pl.y)); g.rotate(r); g.scale(2, 2); sprite(g, BIRD[f], -6, -5, BIRD_PAL); g.restore();
   if (pl.flash) { g.globalAlpha = pl.flash / 10; g.fillStyle = '#ffffff'; g.fillRect(0, 0, W, PL.H); g.globalAlpha = 1; }
   // score
@@ -421,6 +450,12 @@ function plMedal(g, x, y, [l, m, d]) {  // une médaille 24 × 24 : ruban et dis
 function plInfo() {
   const rows = [el('span', '', 'Meilleur score'), el('b', '', String(games.best.plumo || 0)), el('span', '', 'Parties'), el('b', '', String(pls.games)), el('span', '', 'Battements d’ailes'), el('b', '', String(pls.flaps))];
   $('plStats').replaceChildren(...rows);
+  $('plBirds').replaceChildren(...BIRDS.map((B, i) => {  // les oiseaux : choisis d'un clic, ou cadenas avec la médaille qui les débloque
+    const ok = plBirdOk(B), c = el('canvas'); c.width = 16; c.height = 12; sprite(c.getContext('2d'), BIRD[0], 2, 1, ok ? B.pal : {k: '#1a0e05', y: '#3a2410', w: '#3a2410', o: '#3a2410', e: '#1a0e05'});
+    const btn = el('button', 'btn' + (pls.bird === i && ok ? ' main' : '')); btn.disabled = !ok; btn.append(c, el('span', '', ok ? B.name : 'Médaille ' + B.need));
+    btn.onclick = () => { pls.bird = i; saveGames(); if (pl.mode !== 'play') BIRD_PAL = B.pal; plInfo(); btn.blur(); };
+    return btn;
+  }));
   $('plMedals').replaceChildren(...PL_MED.map(([n, k, col]) => { const c = el('canvas'); c.width = c.height = 24; const g = c.getContext('2d'); if (!pls.medals[k]) g.globalAlpha = .25; plMedal(g, 0, 0, col); const w = el('div', 'hint'); w.title = k + ' (' + n + ' points)'; w.append(c, el('span', '', ' × ' + (pls.medals[k] || 0))); return w; }));
 }
 $('plCanvas').onpointerdown = e => { e.preventDefault(); if (pl) plFlap(); };
@@ -430,13 +465,28 @@ document.addEventListener('keydown', e => {
   if (e.key.toLowerCase() === 'p' && pl.mode === 'play') pl.mode = 'pause';
 });
 $('plNew').onclick = () => { plNew(); $('plNew').blur(); };
+$('plFs').onclick = () => { $('plFs').blur(); try { document.fullscreenElement ? document.exitFullscreen() : $('plCanvas').parentElement.requestFullscreen?.().catch(() => {}); } catch {} };
+{  // la manette envoie les touches du clavier : A, B ou la croix vers le haut = battre des ailes, Start = pause
+  const KEY = {0: ' ', 1: ' ', 12: 'ArrowUp', 9: 'p'}, held = new Set();
+  const loop = () => {
+    requestAnimationFrame(loop); if (!view.classList.contains('on') || !navigator.getGamepads) return;
+    const p = [...navigator.getGamepads()].find(Boolean); if (!p) return;
+    const down = new Set(); for (const [i, k] of Object.entries(KEY)) if (p.buttons[i]?.pressed) down.add(k); if ((p.axes[1] || 0) < -.6) down.add('ArrowUp');
+    for (const k of down) if (!held.has(k)) { held.add(k); document.dispatchEvent(new KeyboardEvent('keydown', {key: k, bubbles: true})); }
+    for (const k of [...held]) if (!down.has(k)) held.delete(k);
+  };
+  requestAnimationFrame(loop);
+}
+$('plCanvas').__pl = {st: () => pl, pls, birds: BIRDS, info: () => plInfo()};
 {  // vérification : passer une colonne donne un point, toucher le sol arrête la partie
-  const keep = pl, realBest = games.best.plumo; pl = null; plNew();
+  const keep = pl, realBest = games.best.plumo; pl = null; plMute = true; plNew();
   pl.mode = 'play'; pl.y = 120; pl.v = 0; pl.pipes = [{x: 20, top: 60, gap: 120, done: false, kind: 0}]; for (let i = 0; i < 5; i++) { pl.v = PL.FLAP / 2; plUpdate(); } const scored = pl.score === 1;
   pl.pipes = []; pl.y = PL.GROUND - 9; pl.v = 3; plUpdate(); const dead = pl.mode === 'over';
-  console.assert(scored && dead, 'plumo', {scored, dead});
+  plNew(); pl.mode = 'play'; pl.score = 60; let moving = 0; for (let i = 0; i < 40; i++) { pl.pipes = []; pl.y = 120; plUpdate(); moving += pl.pipes.some(q => q.mv) ? 1 : 0; }
+  plNew(); pl.mode = 'play'; pl.score = 60; pl.windNext = 1; pl.y = 120; plUpdate(); const windy = pl.wind !== 0;
+  console.assert(scored && dead && moving > 5 && moving < 35 && windy, 'plumo', {scored, dead, moving, windy});
   if (realBest === undefined) delete games.best.plumo; else games.best.plumo = realBest;  // la vérification ne laisse pas de faux record
-  pl = keep;
+  pl = keep; plMute = false;
 }
 ctx.onOpen(() => {
   if (!pl || !pl.g) { plNew(); pl.g = $('plCanvas').getContext('2d'); }
