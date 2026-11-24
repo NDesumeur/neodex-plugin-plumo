@@ -4,6 +4,12 @@ A one-button skill game: fly a little bird between stone columns. It falls on it
 
 *Version française : [README.md](README.md)*
 
+## Worlds, birds and medals (new in 1.2.0)
+
+- Four **worlds**, each with its own record: **Meadow**; **Forest** (fireflies between the trunks, +1 point each); **City** (buildings move up and down from 10 points); **Snow** (the wind blows from the start, snow falls). Each has a day and a night sky.
+- Each **bird** flies its own way: Plumo balanced, **Robin** light (falls gently, the wind pushes it), **Tit** small (gets through more easily), **Flamingo** heavy (big flaps, the wind barely pushes it), **Phoenix** comes back to life once per game.
+- A **medal is announced in game** as soon as a milestone is passed: bronze (10), silver (25), gold (50), platinum (100) and the new **diamond** (150).
+
 ## Controls
 
 - **Click**, **Space**, **↑** or **Enter**: one wing flap, giving an upward push.

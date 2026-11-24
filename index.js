@@ -7,6 +7,7 @@ const HTML = `<div class="appWrap wide">
       <div class="sysCard"><b>RECORDS</b><div class="gStats" id="plStats"></div></div>
       <div class="sysCard"><b>MÉDAILLES</b><div class="row" id="plMedals"></div></div>
       <div class="sysCard"><b>OISEAUX</b><div class="plBirds" id="plBirds"></div></div>
+      <div class="sysCard"><b>MONDES</b><div class="plBirds" id="plWorlds"></div></div>
       <div class="row"><button class="btn main" id="plNew">NOUVELLE PARTIE</button><button class="btn" id="plFs">PLEIN ÉCRAN</button></div>
     </div></div>
 </div>`;
@@ -20,9 +21,11 @@ const CSS = `.gMain{display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap}
 .gStats{display:grid;grid-template-columns:1fr auto;gap:4px 14px}
 .gStats b{text-align:right}
 .gameBox canvas{width:min(100%,max(280px,calc((100vh - 170px) * 216 / 288)));height:auto;aspect-ratio:216/288}
-.plBirds{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px}
+.plBirds{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px}
 .plBirds button{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;font-size:13px;line-height:1.2}
 .plBirds canvas{width:48px;height:36px;image-rendering:pixelated}
+.plBirds em{font-style:normal;font-size:11px;opacity:.8}
+.pxk.pxk .plBirds .btn .pxV{white-space:normal;text-align:center}.plBirds .btn{min-width:0}
 #plMedals canvas{width:48px;height:48px;image-rendering:pixelated}`;
 /* ---------- l'habillage pixel art, dessiné à la main : police bitmap (accents compris), cadres, boutons, icônes ----------
    Tout est en pixels pleins, agrandis par 2 sans lissage : aucun dégradé, aucune ombre floue. */
@@ -300,7 +303,7 @@ export default async function (ctx) {
   tile: ['................', '...:............', '................', '..........+.....', '................', '................', '.....:..........', '................',
     '................', '.............:..', '................', '..+.............', '................', '.........:......', '................', '................'] },
   emblem: ['....kkkkk......', '..kkggggskk....', '.kggggggwwk....', '.kgggggggwkwk..', 'kggggggggwwwk..', 'kwwwgggggooooo.', 'kwwwwggggkoook.', '.kwwwgggggkkk..', '.kggggggggk....', '..kkggggskk....', '....kkkkk......'],
-  icons: [[/^NOUVELLE/, 'play'], [/^PLEIN/, 'full'], [/^RECORDS/, 'crown'], [/^MÉDAILLES/, 'star'], [/^OISEAUX/, 'star']] });
+  icons: [[/^NOUVELLE/, 'play'], [/^PLEIN/, 'full'], [/^RECORDS/, 'crown'], [/^MÉDAILLES/, 'star'], [/^OISEAUX/, 'star'], [/^MONDES/, 'star']] });
   const $ = id => view.querySelector('#' + id) || document.getElementById(id);
   const doc = async n => { try { return await folder.read(n); } catch { return null; } };
   const games = { best: {}, ...(await doc('games')) };
@@ -333,7 +336,7 @@ const clock = s => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStar
 
 /* ---------- Plumo : gravité, un battement = une impulsion vers le haut ; colonnes de pierre ; le ciel passe du jour au soir puis à la nuit avec le score ---------- */
 const PL = {W: 216, H: 288, GROUND: 252, G: .16, FLAP: -3.15, VMAX: 5, GAP0: 92, GAPMIN: 66, SPEED0: 1.25, SPACING: 92, PW: 26};
-const PL_MED = [[100, 'platine', ['#e8f4ff', '#9fc8e8', '#5a7fa8']], [50, 'or', ['#fff0a8', '#ffcf3a', '#a8780a']], [25, 'argent', ['#ffffff', '#c8ccd8', '#7a7f92']], [10, 'bronze', ['#ffc89a', '#d0844a', '#7a4a1f']]];
+const PL_MED = [[150, 'diamant', ['#e0ffff', '#7ae8f0', '#2a8aa8']], [100, 'platine', ['#e8f4ff', '#9fc8e8', '#5a7fa8']], [50, 'or', ['#fff0a8', '#ffcf3a', '#a8780a']], [25, 'argent', ['#ffffff', '#c8ccd8', '#7a7f92']], [10, 'bronze', ['#ffc89a', '#d0844a', '#7a4a1f']]];
 const pls = gstore('plumo', {games: 0, flaps: 0, medals: {}});
 pls.bird ??= 0;
 let pl = null;
@@ -342,17 +345,20 @@ const BIRD = [  // 3 images d'ailes ; k contour, y corps, w ventre et œil, o be
   ['....kkkkk...', '..kkyyyykk..', '.kyyyyywwek.', 'kyyyyyywwwk.', 'kkkkkyyyyoook', 'kwwwwkyykoook', '.kwwwkyyykkk.', '..kkkyyyyk...', '...kkkkkk....'],
   ['....kkkkk...', '..kkyyyykk..', '.kkkyyywwek.', 'kwwwkyywwwk.', 'kwwwkyyyyoook', 'kkkkyyyykoook', '.kyyyyyyykkk.', '..kyyyyyyk...', '...kkkkkk....']];
 const BIRDS = [
-  {name: 'Plumo', need: null, pal: {k: '#2a1408', y: '#ffcf3a', w: '#ffffff', o: '#ff6a2a', e: '#2a1408'}},
-  {name: 'Rougegorge', need: 'bronze', pal: {k: '#2a1408', y: '#a86a3a', w: '#ff6a3a', o: '#3a2a1a', e: '#2a1408'}},
-  {name: 'Mésange', need: 'argent', pal: {k: '#0e1a32', y: '#3f7aff', w: '#fff07a', o: '#2a2a3a', e: '#0e1a32'}},
-  {name: 'Flamant', need: 'or', pal: {k: '#3a0e22', y: '#ff8ac8', w: '#ffd8ec', o: '#2a1420', e: '#3a0e22'}},
-  {name: 'Phénix', need: 'platine', pal: {k: '#3a0806', y: '#ff5a2a', w: '#ffe07a', o: '#fff4c8', e: '#3a0806'}, glow: true},
+  {name: 'Plumo', need: null, power: 'Équilibré', G: .16, flap: -3.15, vmax: 5, hb: 9, blow: 1, pal: {k: '#2a1408', y: '#ffcf3a', w: '#ffffff', o: '#ff6a2a', e: '#2a1408'}},
+  {name: 'Rougegorge', need: 'bronze', power: 'Léger, sensible au vent', G: .12, flap: -2.6, vmax: 4, hb: 9, blow: 1.5, pal: {k: '#2a1408', y: '#a86a3a', w: '#ff6a3a', o: '#3a2a1a', e: '#2a1408'}},
+  {name: 'Mésange', need: 'argent', power: 'Petite, passe mieux', G: .16, flap: -3.15, vmax: 5, hb: 7, blow: 1, pal: {k: '#0e1a32', y: '#3f7aff', w: '#fff07a', o: '#2a2a3a', e: '#0e1a32'}},
+  {name: 'Flamant', need: 'or', power: 'Lourd, résiste au vent', G: .2, flap: -3.7, vmax: 5.8, hb: 9, blow: .5, pal: {k: '#3a0e22', y: '#ff8ac8', w: '#ffd8ec', o: '#2a1420', e: '#3a0e22'}},
+  {name: 'Phénix', need: 'platine', power: 'Renaît une fois', G: .16, flap: -3.15, vmax: 5, hb: 9, blow: 1, reborn: true, pal: {k: '#3a0806', y: '#ff5a2a', w: '#ffe07a', o: '#fff4c8', e: '#3a0806'}, glow: true},
 ];
-const plBirdOk = b => !b.need || !!pls.medals[b.need];
+const plHas = k => PL_MED.slice(0, PL_MED.findIndex(m => m[1] === k) + 1).some(m => pls.medals[m[1]]);
+const plBirdOk = b => !b.need || plHas(b.need);
+let PLB = BIRDS[0], PLW = null;
 let BIRD_PAL = BIRDS[0].pal;
 function plNew() {
-  pl = Object.assign(pl || {tick: 0, raf: 0}, {seen: pl ? pl.tick : 0, mode: 'ready', y: 120, v: 0, rot: 0, pipes: [], score: 0, dist: 0, flash: 0, dead: 0, record: false, fl: 0, wind: 0, windA: 0, windT: 0, windNext: 480, gusts: []});
-  BIRD_PAL = (plBirdOk(BIRDS[pls.bird] || BIRDS[0]) ? BIRDS[pls.bird] : BIRDS[0]).pal;
+  pl = Object.assign(pl || {tick: 0, raf: 0}, {seen: pl ? pl.tick : 0, mode: 'ready', y: 120, v: 0, rot: 0, pipes: [], score: 0, dist: 0, flash: 0, dead: 0, record: false, fl: 0, wind: 0, windA: 0, windT: 0, windNext: 480, gusts: [], flies: [], pop: null, reborn: false, inv: 0});
+  PLB = plBirdOk(BIRDS[pls.bird] || BIRDS[0]) ? BIRDS[pls.bird] : BIRDS[0]; BIRD_PAL = PLB.pal;
+  PLW = PL_WORLDS.find(w => w.id === pls.world) || PL_WORLDS[0]; if (PLW.id === 'neige') pl.windNext = 240;
 }
 function plGap() { return Math.max(PL.GAPMIN, PL.GAP0 - pl.score * .6); }
 function plSpeed() { return PL.SPEED0 + Math.min(1, pl.score / 60) * .7; }
@@ -360,36 +366,48 @@ function plFlap() {
   if (pl.mode === 'over') { if (pl.dead > 40) plNew(); return; }
   if (pl.mode === 'ready') { pl.mode = 'play'; pls.games++; saveGames(); }
   if (pl.mode === 'pause') pl.mode = 'play';
-  pl.v = PL.FLAP; pl.fl = 10; pls.flaps++; plBeep(520, .05);
+  pl.v = PLB.flap; pl.fl = 10; pls.flaps++; plBeep(520, .05);
 }
 let plac = null;
 let plMute = false;
 function plBeep(f, d, type = 'square', slide = 0) { if (plMute) return; try { plac ??= new AudioContext(); const o = plac.createOscillator(), g = plac.createGain(), t = plac.currentTime; o.type = type; o.frequency.setValueAtTime(f, t); if (slide) o.frequency.exponentialRampToValueAtTime(slide, t + d); g.gain.setValueAtTime(.05, t); g.gain.exponentialRampToValueAtTime(.0001, t + d); o.connect(g).connect(plac.destination); o.start(t); o.stop(t + d + .02); } catch {} }
+const plRec = () => PLW.id === 'prairie' ? 'plumo' : 'plumo-' + PLW.id;  // un record par monde
+function plAdd(n) {  // des points ; passer un palier annonce sa médaille tout de suite
+  const was = pl.score; pl.score += n;
+  const m = PL_MED.find(([k]) => was < k && pl.score >= k); if (m) { pl.pop = {text: 'Médaille ' + m[1] + ' !', t: 110, c: m[2][1], m: m[2]}; plBeep(660, .3, 'triangle', 1320); }
+}
 function plHit() {
   if (pl.mode !== 'play') return;
+  if (PLB.reborn && !pl.reborn) {  // le phénix : il repart d'un coup d'ailes, les colonnes proches s'effacent
+    pl.reborn = true; pl.inv = 90; pl.y = Math.min(pl.y, 140); pl.v = PLB.flap; pl.flash = 6; pl.pipes = pl.pipes.filter(p => p.x > 90);
+    pl.pop = {text: 'RENAISSANCE !', t: 90, c: '#ff8a3a'}; plBeep(330, .4, 'triangle', 990); return;
+  }
   pl.mode = 'over'; pl.flash = 8; pl.dead = 0; plBeep(300, .3, 'sawtooth', 60);
-  pl.record = best('plumo', pl.score);
+  pl.record = best(plRec(), pl.score);
   for (const [n, k] of PL_MED) if (pl.score >= n) { pls.medals[k] = (pls.medals[k] || 0) + 1; break; }
   saveGames(); plInfo();
 }
 function plUpdate() {
-  if (pl.fl) pl.fl--; if (pl.flash) pl.flash--;
+  if (pl.fl) pl.fl--; if (pl.flash) pl.flash--; if (pl.pop && --pl.pop.t <= 0) pl.pop = null;
   if (pl.mode === 'ready') { pl.y = 120 + Math.sin(pl.tick / 12) * 4; pl.dist += 1; return; }
   if (pl.mode === 'over') { pl.dead++; if (pl.y < PL.GROUND - 10) { pl.v = Math.min(PL.VMAX + 2, pl.v + PL.G * 1.5); pl.y += pl.v; } return; }
-  const sp = plSpeed(); pl.dist += sp;
-  if (pl.score >= 50) {  // le vent : une rafale de 2 à 3 s toutes les 6 à 10 s, annoncée une seconde avant
+  const sp = plSpeed(); pl.dist += sp; if (pl.inv) pl.inv--;
+  if (pl.score >= 50 || PLW.id === 'neige') {  // le vent : une rafale de 2 à 3 s toutes les 6 à 10 s, annoncée une seconde avant
     if (pl.windA > 0) pl.windA--; else if (pl.windT > 0) { if (--pl.windT === 0) pl.wind = 0; } else if (--pl.windNext <= 0) { pl.wind = Math.random() < .5 ? -1 : 1; pl.windA = 60; pl.windT = 120 + Math.floor(Math.random() * 60); pl.windNext = 360 + Math.floor(Math.random() * 240); plBeep(200, .5, 'triangle', pl.wind < 0 ? 400 : 100); }
   }
-  const blow = !pl.windA && pl.windT > 0 ? pl.wind * .055 : 0;  // la première seconde n'est que l'annonce
-  pl.v = Math.min(PL.VMAX, pl.v + PL.G + blow); pl.y += pl.v; if (pl.y < 4) { pl.y = 4; pl.v = 0; }
+  const blow = !pl.windA && pl.windT > 0 ? pl.wind * .055 * PLB.blow : 0;  // la première seconde n'est que l'annonce
+  pl.v = Math.min(PLB.vmax, pl.v + PLB.G + blow); pl.y += pl.v; if (pl.y < 4) { pl.y = 4; pl.v = 0; }
   pl.rot = Math.max(-.45, Math.min(1.2, pl.v / 4));
   const last = pl.pipes.at(-1);
-  if (!last || last.x < PL.W - PL.SPACING) { const gap = plGap(), top = 30 + Math.random() * (PL.GROUND - 60 - gap); pl.pipes.push({x: PL.W + 4, top, base: top, gap, done: false, kind: Math.random() < .5 ? 0 : 1, mv: pl.score >= 50 && Math.random() < .45 ? 14 + Math.random() * 10 : 0, ph: Math.random() * 6}); }
+  if (!last || last.x < PL.W - PL.SPACING) { const gap = plGap(), top = 30 + Math.random() * (PL.GROUND - 60 - gap); pl.pipes.push({x: PL.W + 4, top, base: top, gap, done: false, kind: Math.random() < .5 ? 0 : 1, mv: pl.score >= (PLW.id === 'ville' ? 10 : 50) && Math.random() < .45 ? 14 + Math.random() * 10 : 0, ph: Math.random() * 6});
+    if (PLW.id === 'foret' && Math.random() < .7) pl.flies.push({x: PL.W + 4 + PL.PW + (PL.SPACING - PL.PW) / 2, y: 40 + Math.random() * (PL.GROUND - 80)}); }  // une luciole entre deux troncs
+  for (const q of pl.flies) { q.x -= sp; if (!q.got && Math.abs(q.x - 54) < 10 && Math.abs(q.y - pl.y) < 11) { q.got = true; plAdd(1); plBeep(1200, .06, 'square', 1600); } }
+  pl.flies = pl.flies.filter(q => !q.got && q.x > -8);
   for (const p of pl.pipes) {
     p.x -= sp;
     if (p.mv) p.top = Math.max(26, Math.min(PL.GROUND - 26 - p.gap, p.base + Math.sin(pl.dist / 40 + p.ph) * p.mv));  // une colonne qui bouge
-    if (!p.done && p.x + PL.PW < 52) { p.done = true; pl.score++; plBeep(880, .08, 'square', 1320); if (pl.score % 25 === 0) plBeep(660, .3, 'triangle', 1320); }
-    if (p.x < 64 && p.x + PL.PW > 44 && (pl.y - 9 < p.top || pl.y + 9 > p.top + p.gap)) plHit();  // la boîte de l'oiseau est un peu plus petite que son dessin
+    if (!p.done && p.x + PL.PW < 52) { p.done = true; plAdd(1); plBeep(880, .08, 'square', 1320); }
+    if (!pl.inv && p.x < 64 && p.x + PL.PW > 44 && (pl.y - PLB.hb < p.top || pl.y + PLB.hb > p.top + p.gap)) plHit();  // la boîte de l'oiseau est un peu plus petite que son dessin
   }
   pl.pipes = pl.pipes.filter(p => p.x > -PL.PW - 4);
   if (pl.y + 10 >= PL.GROUND) { pl.y = PL.GROUND - 10; plHit(); }
@@ -397,14 +415,28 @@ function plUpdate() {
 // le ciel : 4 ambiances (jour, soir, nuit, aube) qui se suivent tous les 25 points
 const SKY = [{top: '#5ec8ff', bot: '#bfeaff', hill: '#7ee07a', hill2: '#4fb85a', cloud: '#ffffff', far: '#9fd8f0'}, {top: '#ff8a5a', bot: '#ffd08a', hill: '#c87a4a', hill2: '#8a4a2a', cloud: '#ffe0c0', far: '#e8a07a'},
   {top: '#0b1236', bot: '#2a2a6a', hill: '#1a2a4a', hill2: '#0e1a32', cloud: '#3a3f7a', far: '#1e2650'}, {top: '#9a7ae8', bot: '#ffc0d8', hill: '#6aa87a', hill2: '#3f7a5a', cloud: '#fff0f8', far: '#c8a8e8'}];
+SKY[2].stars = 1;
+const PL_WORLDS = [
+  {id: 'prairie', name: 'Prairie', power: 'Le monde de départ', sky: SKY, ground: ['#7ee07a', '#4fb85a', '#c8925a', '#a8723a'], col: [['#14301a', '#4fb85a', '#9ae88a', '#2a7a3a'], ['#2a1408', '#c8a878', '#e8d0a0', '#8a6a42']]},
+  {id: 'foret', name: 'Forêt', power: 'Lucioles : +1 point', sky: [{top: '#3a7a5a', bot: '#a8d8a0', hill: '#2a6a3a', hill2: '#1a4a2a', cloud: '#d8f0d0', far: '#4a8a5a'}, {top: '#0a1a1a', bot: '#1a3a3a', hill: '#0e2a1e', hill2: '#081a12', cloud: '#2a4a4a', far: '#123a2a', stars: 1}],
+    ground: ['#3a8a3a', '#2a6a2a', '#4a3018', '#2e1c0c'], col: [['#1a0e05', '#6a4020', '#8a5a30', '#4a2a14'], ['#1a0e05', '#5a3a1a', '#7a5228', '#3a2210']]},
+  {id: 'ville', name: 'Ville', power: 'Immeubles qui bougent dès 10', sky: [{top: '#4a8ad8', bot: '#c8d8f0', hill: '#6a7080', hill2: '#4a505e', cloud: '#ffffff', far: '#8a98b0', win: '#e8f0ff'}, {top: '#0a0a24', bot: '#3a2a5a', hill: '#2a2a40', hill2: '#1a1a2e', cloud: '#2a2a4a', far: '#22223a', win: '#ffd84a', stars: 1}],
+    ground: ['#9a9aa6', '#6a6a76', '#3a3a44', '#ffd84a'], col: [['#14141e', '#5a6070', '#7a8090', '#3a3f4a'], ['#1e1410', '#8a5a4a', '#a8786a', '#5a3a30']]},
+  {id: 'neige', name: 'Neige', power: 'Vent dès le début', sky: [{top: '#7ab8e8', bot: '#e8f4ff', hill: '#ffffff', hill2: '#d0e4f4', cloud: '#ffffff', far: '#a8c8e8'}, {top: '#1a2a5a', bot: '#6a7ab0', hill: '#c8d8f0', hill2: '#98aed0', cloud: '#8a9ac8', far: '#4a5a8a', stars: 1}],
+    ground: ['#ffffff', '#c8dcf0', '#e0ecf8', '#b0c8e0'], col: [['#1a3a5a', '#9ad8f0', '#e8f8ff', '#5aa8d0'], ['#1a3a5a', '#b8e4f8', '#ffffff', '#78b8e0']]}];
+pls.world ??= 'prairie';
 const lerpC = (a, b, k) => '#' + [1, 3, 5].map(i => Math.round(parseInt(a.substr(i, 2), 16) * (1 - k) + parseInt(b.substr(i, 2), 16) * k).toString(16).padStart(2, '0')).join('');
-function plSky() { const f = (pl.score / 25) % 4, i = Math.floor(f), k = Math.min(1, (f - i) * 4), a = SKY[i], b = SKY[(i + 1) % 4]; return Object.fromEntries(Object.keys(a).map(n => [n, lerpC(a[n], b[n], i === Math.floor(f) && f - i > .75 ? (f - i - .75) * 4 : 0)])); }
+function plSky() { const S = PLW.sky, f = (pl.score / 25) % S.length, i = Math.floor(f), a = S[i], b = S[(i + 1) % S.length], k = f - i > .75 ? (f - i - .75) * 4 : 0; return {...Object.fromEntries(Object.keys(a).filter(n => n !== 'stars').map(n => [n, lerpC(a[n], b[n], k)])), stars: k < .5 ? a.stars : b.stars}; }
 function plPipe(g, x, y, h, cap, kind) {  // une colonne de pierre : bord sombre, face claire à gauche, joints, chapiteau
   if (h <= 0) return;
-  const W = PL.PW, C = kind ? ['#2a1408', '#c8a878', '#e8d0a0', '#8a6a42'] : ['#14301a', '#4fb85a', '#9ae88a', '#2a7a3a'];
+  const W = PL.PW, C = PLW.col[kind ? 1 : 0], id = PLW.id;
   px(g, C[0], x, y, W, h); px(g, C[1], x + 1, y, W - 2, h); px(g, C[2], x + 3, y, 3, h); px(g, C[3], x + W - 5, y, 3, h);
-  for (let j = (Math.floor(y) % 12 + 12) % 12; j < h; j += 12) px(g, C[3], x + 1, y + j, W - 2, 1);
-  const cy = cap === 'top' ? y + h - 10 : y; px(g, C[0], x - 3, cy, W + 6, 10); px(g, C[1], x - 2, cy + 1, W + 4, 8); px(g, C[2], x, cy + 2, 3, 6); px(g, C[3], x - 2, cy + 7, W + 4, 2);
+  if (id === 'ville') { for (let j = 4; j < h - 4; j += 7) for (let i = 0; i < 4; i++) px(g, (j + i * 3 + kind) % 4 ? '#ffe89a' : C[3], x + 4 + i * 5, y + j, 3, 4); }  // les fenêtres
+  else if (id === 'foret') { for (let j = (Math.floor(y) % 9 + 9) % 9; j < h; j += 9) px(g, C[3], x + 8 + (j % 18 ? 0 : 6), y + j, 2, 5); }  // l'écorce
+  else for (let j = (Math.floor(y) % 12 + 12) % 12; j < h; j += 12) px(g, C[3], x + 1, y + j, W - 2, 1);
+  const cy = cap === 'top' ? y + h - 10 : y;
+  if (id === 'foret') { px(g, '#0e2a12', x - 6, cy - 1, W + 12, 12); px(g, '#2f8a3a', x - 5, cy, W + 10, 10); px(g, '#7ee07a', x - 3, cy + 2, 6, 2); px(g, '#7ee07a', x + 12, cy + 4, 6, 2); px(g, '#1a5a24', x - 5, cy + 8, W + 10, 2); return; }  // le feuillage
+  if (id === 'neige' && cap === 'top') for (let i = 0; i < 6; i++) { const l = 3 + (i * 5) % 6; px(g, '#e8f8ff', x - 1 + i * 5, cy + 10, 2, l); px(g, '#e8f8ff', x + i * 5, cy + 10 + l, 1, 2); }  // les glaçons px(g, C[0], x - 3, cy, W + 6, 10); px(g, C[1], x - 2, cy + 1, W + 4, 8); px(g, C[2], x, cy + 2, 3, 6); px(g, C[3], x - 2, cy + 7, W + 4, 2);
 }
 function plDraw() {
   const g = pl.g, s = plSky(), W = PL.W;
@@ -412,12 +444,22 @@ function plDraw() {
   const sky = g.createLinearGradient(0, 0, 0, PL.GROUND); sky.addColorStop(0, s.top); sky.addColorStop(1, s.bot);
   // le ciel en bandes (pas de dégradé lisse : des bandes de 6 pixels, tramées)
   for (let y = 0; y < PL.GROUND; y += 6) { const k = y / PL.GROUND; g.fillStyle = lerpC(s.top, s.bot, Math.round(k * 8) / 8); g.fillRect(0, y, W, 6); }
-  if (s.top === SKY[2].top || pl.score % 100 >= 50 && pl.score % 100 < 75) for (let i = 0; i < 30; i++) px(g, '#ffffff', (i * 71 + 13) % W, (i * 37) % 120, 1, 1);
+  if (s.stars) for (let i = 0; i < 30; i++) px(g, '#ffffff', (i * 71 + 13) % W, (i * 37) % 120, 1, 1);
   const d = pl.dist;
   // nuages, collines lointaines, collines proches : trois vitesses
   for (let i = 0; i < 5; i++) { const x = ((i * 67 - d * .15) % (W + 60) + W + 60) % (W + 60) - 40, y = 20 + (i * 29) % 70; for (const [a, b, w, h] of [[0, 4, 30, 6], [6, 0, 16, 10], [18, 2, 10, 8]]) px(g, s.cloud, x + a, y + b, w, h); }
-  for (let x = 0; x < W; x += 2) { const h = 24 + Math.sin((x + d * .3) / 23) * 10 + Math.sin((x + d * .3) / 9) * 3; px(g, s.far, x, PL.GROUND - 18 - h, 2, h + 18); }
-  for (let x = 0; x < W; x += 2) { const h = 12 + Math.sin((x + d * .6) / 17) * 6; px(g, s.hill2, x, PL.GROUND - h, 2, h); px(g, s.hill, x, PL.GROUND - h, 2, 2); }
+  const B = PL.GROUND, wrap = (v, m) => (v % m + m) % m;
+  if (PLW.id === 'foret') {  // des sapins lointains puis proches
+    for (let i = 0; i < 9; i++) { const x = wrap(i * 31 - d * .3, W + 40) - 20, h = 50 + (i * 53) % 34; for (let k = 0; k < h; k += 2) { const w = 2 + Math.floor(k / 3) * 2 - (k % 12 > 8 ? 4 : 0); px(g, s.far, Math.round(x - w / 2), B - 10 - h + k, w, 2); } px(g, s.far, Math.round(x - 1), B - 10, 2, 10); }
+    for (let i = 0; i < 7; i++) { const x = wrap(i * 41 - d * .6, W + 30) - 15, h = 26 + (i * 29) % 16; for (let k = 0; k < h; k += 2) { const w = 2 + Math.floor(k / 2) * 2 - (k % 10 > 6 ? 4 : 0); px(g, s.hill2, Math.round(x - w / 2), B - h + k, w, 2); } }
+  } else if (PLW.id === 'ville') {  // des tours aux fenêtres allumées, puis des toits plus proches
+    for (let i = 0; i < 10; i++) { const x = Math.round(wrap(i * 27 - d * .25, W + 60) - 30), w = 16 + (i * 7) % 12, h = 40 + (i * 37) % 70; px(g, s.far, x, B - h, w, h); for (let r = 0; r * 6 < h - 10; r++) for (let c = 0; c * 5 < w - 6; c++) if ((i * 3 + r * 2 + c) % 4) px(g, s.win, x + 3 + c * 5, B - h + 4 + r * 6, 2, 3); }
+    for (let i = 0; i < 8; i++) { const x = Math.round(wrap(i * 37 - d * .6, W + 40) - 20), w = 22 + (i * 5) % 10, h = 14 + (i * 13) % 18; px(g, s.hill2, x, B - h, w, h); px(g, s.hill, x, B - h, w, 2); }
+  } else {
+    for (let x = 0; x < W; x += 2) { if (PLW.id === 'neige') { const t = (x + d * .2) % 90, h = 30 + (45 - Math.abs(t - 45)) * 1.1 + Math.sin((x + d * .2) / 13) * 3; px(g, s.far, x, B - 18 - h, 2, h + 18); px(g, '#ffffff', x, B - 18 - h, 2, Math.max(0, h - 62)); continue; }  // des montagnes aux sommets blancs
+      const h = 24 + Math.sin((x + d * .3) / 23) * 10 + Math.sin((x + d * .3) / 9) * 3; px(g, s.far, x, PL.GROUND - 18 - h, 2, h + 18); }
+  }
+  if (PLW.id === 'prairie' || PLW.id === 'neige') for (let x = 0; x < W; x += 2) { const h = 12 + Math.sin((x + d * .6) / 17) * 6; px(g, s.hill2, x, PL.GROUND - h, 2, h); px(g, s.hill, x, PL.GROUND - h, 2, 2); }
   for (const p of pl.pipes) { plPipe(g, p.x, 0, p.top, 'top', p.kind); plPipe(g, p.x, p.top + p.gap, PL.GROUND - p.top - p.gap, 'bottom', p.kind); if (p.mv) for (const yy of [p.top - 4, p.top + p.gap + 3]) px(g, '#ffffff', p.x + PL.PW / 2 - 1, yy, 2, 1); }
   if (pl.wind) {  // la rafale : des traits qui filent, et l'annonce en haut
     if (pl.mode === 'play' && !pl.windA && pl.tick % 2 === 0) pl.gusts.push({x: Math.random() * W, y: pl.wind < 0 ? PL.GROUND : 0, l: 8 + Math.random() * 10});
@@ -426,20 +468,24 @@ function plDraw() {
   for (const q of pl.gusts) { q.y += pl.wind < 0 ? -5 : 5; q.x -= 1; px(g, 'rgba(255,255,255,.55)', q.x, q.y, 1, q.l); }
   pl.gusts = pl.gusts.filter(q => q.y > -20 && q.y < PL.GROUND + 20);
   // le sol : herbe, terre, petites pierres qui défilent
-  px(g, '#2a1408', 0, PL.GROUND, W, 1); px(g, '#7ee07a', 0, PL.GROUND + 1, W, 4); px(g, '#4fb85a', 0, PL.GROUND + 5, W, 2); px(g, '#c8925a', 0, PL.GROUND + 7, W, PL.H - PL.GROUND - 7);
-  for (let x = -(d % 16); x < W; x += 16) { px(g, '#a8723a', x, PL.GROUND + 12, 6, 2); px(g, '#a8723a', x + 9, PL.GROUND + 22, 4, 2); px(g, '#4fb85a', x + 4, PL.GROUND + 5, 2, 2); }
+  const GR = PLW.ground;
+  for (const q of pl.flies) if ((pl.tick + q.y >> 3) % 4) { px(g, 'rgba(255,240,120,.35)', q.x - 3, q.y - 3, 7, 7); px(g, '#fff8a0', q.x - 1, q.y - 1, 3, 3); }  // les lucioles clignotent
+  if (PLW.id === 'neige') for (let i = 0; i < 40; i++) { const v = .4 + (i % 3) * .3, b = i % 3 === 2 ? 2 : 1; px(g, '#ffffff', wrap(i * 53 + pl.tick * .3 * v + pl.wind * pl.tick * .8, W), (i * 97 + pl.tick * v) % PL.GROUND, b, b); }  // la neige tombe
+  px(g, '#2a1408', 0, PL.GROUND, W, 1); px(g, GR[0], 0, PL.GROUND + 1, W, 4); px(g, GR[1], 0, PL.GROUND + 5, W, 2); px(g, GR[2], 0, PL.GROUND + 7, W, PL.H - PL.GROUND - 7);
+  for (let x = -(d % 16); x < W; x += 16) if (PLW.id === 'ville') px(g, GR[3], x, PL.GROUND + 20, 8, 2); else { px(g, GR[3], x, PL.GROUND + 12, 6, 2); px(g, GR[3], x + 9, PL.GROUND + 22, 4, 2); px(g, GR[1], x + 4, PL.GROUND + 5, 2, 2); }
   // l'oiseau, penché selon sa vitesse (rotation par pas de 1/8 de tour : reste net)
   const f = pl.mode === 'over' ? 1 : pl.fl > 5 ? 2 : pl.fl > 0 ? 0 : Math.floor(pl.tick / 8) % 3, r = Math.round(pl.rot * 4) / 4;
   if (BIRD_PAL === BIRDS[4].pal && pl.mode !== 'over') for (let i = 1; i < 6; i++) px(g, i % 2 ? '#ffcf3a' : '#ff5a2a', 42 - i * 4 + ((pl.tick + i) % 3), pl.y - 1 + Math.sin(pl.tick / 4 + i) * 2, 3, 3);  // la traîne du phénix
-  g.save(); g.translate(Math.round(54), Math.round(pl.y)); g.rotate(r); g.scale(2, 2); sprite(g, BIRD[f], -6, -5, BIRD_PAL); g.restore();
+  if (!(pl.inv && (pl.tick >> 2) % 2)) { g.save(); g.translate(Math.round(54), Math.round(pl.y)); g.rotate(r); g.scale(2, 2); sprite(g, BIRD[f], -6, -5, BIRD_PAL); g.restore(); }
+  if (pl.pop) { PXK.fill(g, pl.pop.text, W / 2, 70, '#2a1408', 1, 'center'); PXK.fill(g, pl.pop.text, W / 2 - 1, 69, pl.pop.c, 1, 'center'); if (pl.pop.m) plMedal(g, W / 2 - 12, 76, pl.pop.m); }
   if (pl.flash) { g.globalAlpha = pl.flash / 10; g.fillStyle = '#ffffff'; g.fillRect(0, 0, W, PL.H); g.globalAlpha = 1; }
   // score
   if (pl.mode !== 'ready') { const k = PXK.scale(24), t = String(pl.score); for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1], [1, 1]]) PXK.fill(g, t, W / 2 + dx * k, 34 + dy * k, '#2a1408', k, 'center'); PXK.fill(g, t, W / 2, 34, '#ffffff', k, 'center'); }
-  if (pl.mode === 'ready') gameText(g, W, [['PLUMO', '#ffcf3a', 16], ['Clic ou espace', '#ffffff'], ['pour voler', '#ffffff'], ['Record ' + (games.best.plumo || 0), '#fff0a8']], 160);
+  if (pl.mode === 'ready') gameText(g, W, [['PLUMO', '#ffcf3a', 16], [PLW.name, '#ffffff'], ['Clic ou espace', '#ffffff'], ['pour voler', '#ffffff'], ['Record ' + (games.best[plRec()] || 0), '#fff0a8']], 160);
   if (pl.mode === 'pause') gameText(g, W, [['PAUSE', '#ffffff', 12], ['Clic pour reprendre', '#fff0a8']], 140);
   if (pl.mode === 'over' && pl.dead > 20) {
     const m = PL_MED.find(([n]) => pl.score >= n);
-    gameText(g, W, [['PERDU', '#ff5a4a', 14], ['Score ' + pl.score, '#ffffff'], [pl.record ? 'NOUVEAU RECORD !' : 'Record ' + (games.best.plumo || 0), '#ffcf3a'], [m ? 'Médaille ' + m[1] : 'Médaille à 10 points', '#fff0a8'], [pl.dead > 40 ? 'Clic pour rejouer' : '', '#d6b58a']], 120);
+    gameText(g, W, [['PERDU', '#ff5a4a', 14], ['Score ' + pl.score, '#ffffff'], [pl.record ? 'NOUVEAU RECORD !' : 'Record ' + (games.best[plRec()] || 0), '#ffcf3a'], [m ? 'Médaille ' + m[1] : 'Médaille à 10 points', '#fff0a8'], [pl.dead > 40 ? 'Clic pour rejouer' : '', '#d6b58a']], 120);
     if (m) plMedal(g, W / 2 - 12, 196, m[2]);
   }
 }
@@ -448,12 +494,18 @@ function plMedal(g, x, y, [l, m, d]) {  // une médaille 24 × 24 : ruban et dis
   R.forEach((row, j) => { for (let i = 0; i < 12; i++) { const c = {r: '#ff4f6a', b: '#3f7aff', k: '#2a1408', m, l, d}[row[i]]; if (c) px(g, c, x + i * 2, y + j * 2, 2, 2); } });
 }
 function plInfo() {
-  const rows = [el('span', '', 'Meilleur score'), el('b', '', String(games.best.plumo || 0)), el('span', '', 'Parties'), el('b', '', String(pls.games)), el('span', '', 'Battements d’ailes'), el('b', '', String(pls.flaps))];
+  const rows = [...PL_WORLDS.flatMap(w => [el('span', '', 'Record ' + w.name), el('b', '', String(games.best[w.id === 'prairie' ? 'plumo' : 'plumo-' + w.id] || 0))]), el('span', '', 'Parties'), el('b', '', String(pls.games)), el('span', '', 'Battements d’ailes'), el('b', '', String(pls.flaps))];
   $('plStats').replaceChildren(...rows);
   $('plBirds').replaceChildren(...BIRDS.map((B, i) => {  // les oiseaux : choisis d'un clic, ou cadenas avec la médaille qui les débloque
     const ok = plBirdOk(B), c = el('canvas'); c.width = 16; c.height = 12; sprite(c.getContext('2d'), BIRD[0], 2, 1, ok ? B.pal : {k: '#1a0e05', y: '#3a2410', w: '#3a2410', o: '#3a2410', e: '#1a0e05'});
-    const btn = el('button', 'btn' + (pls.bird === i && ok ? ' main' : '')); btn.disabled = !ok; btn.append(c, el('span', '', ok ? B.name : 'Médaille ' + B.need));
+    const btn = el('button', 'btn' + (pls.bird === i && ok ? ' main' : '')); btn.disabled = !ok; btn.append(c, el('span', '', ok ? B.name : 'Médaille ' + B.need), el('em', '', B.power));
     btn.onclick = () => { pls.bird = i; saveGames(); if (pl.mode !== 'play') BIRD_PAL = B.pal; plInfo(); btn.blur(); };
+    return btn;
+  }));
+  $('plWorlds').replaceChildren(...PL_WORLDS.map(w => {  // les mondes, tous ouverts : un clic avant la partie
+    const c = el('canvas'), g = c.getContext('2d'); c.width = 16; c.height = 12; px(g, w.sky[0].top, 0, 0, 16, 5); px(g, w.sky[0].far, 0, 5, 16, 3); px(g, w.col[0][1], 6, 0, 4, 9); px(g, w.ground[0], 0, 9, 16, 1); px(g, w.ground[2], 0, 10, 16, 2);
+    const btn = el('button', 'btn' + (PLW?.id === w.id ? ' main' : '')); btn.append(c, el('span', '', w.name), el('em', '', w.power));
+    btn.onclick = () => { pls.world = w.id; saveGames(); if (pl.mode !== 'play') plNew(); plInfo(); btn.blur(); };
     return btn;
   }));
   $('plMedals').replaceChildren(...PL_MED.map(([n, k, col]) => { const c = el('canvas'); c.width = c.height = 24; const g = c.getContext('2d'); if (!pls.medals[k]) g.globalAlpha = .25; plMedal(g, 0, 0, col); const w = el('div', 'hint'); w.title = k + ' (' + n + ' points)'; w.append(c, el('span', '', ' × ' + (pls.medals[k] || 0))); return w; }));
@@ -477,7 +529,7 @@ $('plFs').onclick = () => { $('plFs').blur(); try { document.fullscreenElement ?
   };
   requestAnimationFrame(loop);
 }
-$('plCanvas').__pl = {st: () => pl, pls, birds: BIRDS, info: () => plInfo()};
+$('plCanvas').__pl = {st: () => pl, pls, birds: BIRDS, worlds: PL_WORLDS, info: () => plInfo()};
 {  // vérification : passer une colonne donne un point, toucher le sol arrête la partie
   const keep = pl, realBest = games.best.plumo; pl = null; plMute = true; plNew();
   pl.mode = 'play'; pl.y = 120; pl.v = 0; pl.pipes = [{x: 20, top: 60, gap: 120, done: false, kind: 0}]; for (let i = 0; i < 5; i++) { pl.v = PL.FLAP / 2; plUpdate(); } const scored = pl.score === 1;
@@ -487,6 +539,21 @@ $('plCanvas').__pl = {st: () => pl, pls, birds: BIRDS, info: () => plInfo()};
   console.assert(scored && dead && moving > 5 && moving < 35 && windy, 'plumo', {scored, dead, moving, windy});
   if (realBest === undefined) delete games.best.plumo; else games.best.plumo = realBest;  // la vérification ne laisse pas de faux record
   pl = keep; plMute = false;
+}
+{  // vérification : chaque oiseau a son battement et sa chute (des sauts ni trop petits ni trop grands), les lucioles, la ville, la neige, le phénix, le palier
+  const keep = pl, keepS = JSON.stringify(pls), keepBest = JSON.stringify(games.best), bad = []; pl = null; plMute = true;
+  pls.medals = {diamant: 1}; if (!BIRDS.every(plBirdOk)) bad.push('la diamant ne débloque pas tout');
+  BIRDS.forEach((B, i) => { pls.bird = i; plNew(); if (PLB !== B) bad.push('oiseau ' + B.name); pl.mode = 'play'; pl.y = 140; plFlap(); if (pl.v !== B.flap) bad.push('battement ' + B.name);
+    const up = B.flap * B.flap / 2 / B.G; if (up < 20 || up > 45) bad.push('saut ' + B.name + ' ' + up.toFixed(0));
+    for (let t = 0; t < 80; t++) { pl.pipes = [{x: 400, top: 0, gap: 999, done: true}]; pl.y = 120; plUpdate(); } if (Math.abs(pl.v - B.vmax) > 1e-9) bad.push('chute ' + B.name); });
+  pls.bird = 0; pls.world = 'foret'; plNew(); pl.mode = 'play'; pl.y = 120; pl.flies = [{x: 54, y: 120}]; pl.pipes = [{x: 400, top: 0, gap: 999, done: true}]; plUpdate(); if (pl.score !== 1) bad.push('luciole : ' + pl.score);
+  pls.world = 'ville'; plNew(); pl.mode = 'play'; pl.score = 15; let mv = 0; for (let i = 0; i < 40; i++) { pl.pipes = []; pl.y = 120; plUpdate(); mv += pl.pipes.some(q => q.mv) ? 1 : 0; } if (mv < 5) bad.push('ville immobile');
+  pls.world = 'neige'; plNew(); pl.mode = 'play'; pl.windNext = 1; pl.y = 120; plUpdate(); if (!pl.wind) bad.push('neige sans vent');
+  pls.world = 'prairie'; pls.bird = 4; plNew(); pl.mode = 'play'; pl.pipes = []; pl.y = PL.GROUND - 9; pl.v = 3; plUpdate(); if (pl.mode !== 'play' || !pl.reborn) bad.push('le phénix ne renaît pas');
+  pl.y = PL.GROUND - 9; pl.v = 3; pl.inv = 0; plUpdate(); if (pl.mode !== 'over') bad.push('le phénix renaît deux fois');
+  plNew(); pl.score = 9; plAdd(1); if (!pl.pop?.m) bad.push('pas de médaille au palier');
+  console.assert(!bad.length, 'plumo', bad);
+  Object.assign(pls, JSON.parse(keepS)); games.best = JSON.parse(keepBest); pl = keep; plMute = false; if (pl) plNew();
 }
 ctx.onOpen(() => {
   if (!pl || !pl.g) { plNew(); pl.g = $('plCanvas').getContext('2d'); }

@@ -21,6 +21,16 @@ module.exports = async ({ pj, sleep }) => {
   await sleep(2500); await shot('2-colonnes');
   await pj(`clearInterval(__pin), 0`);
   if (st[0] !== 'play' || !st[1]) throw new Error('après 50 : ' + JSON.stringify(st));
+  // les mondes : quatre boutons ; chacun se choisit avant la partie et garde son propre record
+  if (await pj(`document.querySelectorAll('#plWorlds button').length`) !== 4) throw new Error('il faut 4 mondes');
+  for (const [i, id] of [[1, 'foret'], [2, 'ville'], [3, 'neige']]) {
+    await pj(`document.getElementById('plNew').click(), 0`); await sleep(150); await pj(`document.querySelectorAll('#plWorlds button')[${i}].click(), 0`); await sleep(150);
+    if (await C('return T.pls.world;') !== id) throw new Error('monde pas choisi : ' + id);
+    await C(`pl.mode = 'play'; pl.score = 12; window.__pin = setInterval(() => { const q = pl.pipes.find(p => p.x + 26 > 40); pl.y = q ? q.top + q.gap / 2 : 120; pl.v = 0; }, 5); return 0;`);
+    await sleep(2200); await shot('3-' + id); await pj(`clearInterval(__pin), 0`);
+    if (await C('return pl.mode;') !== 'play') throw new Error('perdu dans le monde ' + id);
+  }
+  await C(`T.pls.world = 'prairie'; T.pls.bird = 0; return 0;`); await pj(`document.getElementById('plNew').click(), 0`);
   const errs = await pj(`window.__e.join(' | ')`); if (errs) throw new Error('erreur : ' + errs);
   await pj(`document.getElementById('plFs').click(), 0`); await sleep(700);
   const fs = await pj(`(() => { const c = document.getElementById('plCanvas'), r = c.getBoundingClientRect(); return document.fullscreenElement === c.parentElement && (Math.abs(r.height - innerHeight) < 3 || Math.abs(r.width - innerWidth) < 3); })()`);

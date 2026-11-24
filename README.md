@@ -4,6 +4,12 @@ Un jeu d'adresse à une touche : fais voler un petit oiseau entre des colonnes d
 
 *English version: [README.en.md](README.en.md)*
 
+## Mondes, oiseaux et médailles (nouveau en 1.2.0)
+
+- Quatre **mondes**, chacun avec son record : **Prairie** ; **Forêt** (des lucioles entre les troncs, +1 point chacune) ; **Ville** (les immeubles montent et descendent dès 10 points) ; **Neige** (le vent souffle dès le début, la neige tombe). Chacun a son ciel de jour et de nuit.
+- Chaque **oiseau** vole à sa façon : Plumo équilibré, **Rougegorge** léger (tombe doucement, le vent le pousse), **Mésange** petite (passe plus facilement), **Flamant** lourd (grands battements, le vent le pousse peu), **Phénix** qui renaît une fois par partie.
+- Une **médaille s'annonce en jeu** dès qu'un palier est passé : bronze (10), argent (25), or (50), platine (100) et la nouvelle **diamant** (150).
+
 ## Commandes
 
 - **Clic**, **Espace**, **↑** ou **Entrée** : un battement d'ailes, qui donne une impulsion vers le haut.
