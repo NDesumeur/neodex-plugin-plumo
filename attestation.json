@@ -1,9 +1,9 @@
 {
   "pluginId": "neodex.plumo",
   "repo": "NDesumeur/neodex-plugin-plumo",
-  "version": "1.2.0",
-  "sha256": "caebeeb889decaba4a400b0ae26e8dbd1b96048573c4b555a254277d66ce73e8",
-  "approvedAt": "2026-11-24T15:56:16.123Z",
+  "version": "1.3.0",
+  "sha256": "6648b4c0f2f826836333a104aeb9e8007f243106e39d5f808a631a2e78fb63d2",
+  "approvedAt": "2026-11-25T17:16:45.116Z",
   "neobase": ">=4.0.0",
-  "signature": "YcizPDjHVHLvC/VD7FDByGwrtm+cq2lwQaPa8F9mWZThjR0OVcQn65bEx/CxPfuZH5DW8O5HYxkE2jtgeBdJBg=="
+  "signature": "sz9aFhhDzFYey2Nz8t6A94wxGzdWifWqS4bMbY7eSUzgRi8xJs4Fk5+MR0bRf4FcR0rGnhxWLNv+5Eb9AdoUDQ=="
 }
