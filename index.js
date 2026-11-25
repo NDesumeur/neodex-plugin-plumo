@@ -311,6 +311,9 @@ export default async function (ctx) {
   const saveGames = () => { clearTimeout(gamesTimer); gamesTimer = setTimeout(() => { gamesTimer = null; folder.write('games', games).catch(() => {}); }, 500); };
   const best = (k, v) => { const b = games.best[k]; if (b == null || v > b) { games.best[k] = v; saveGames(); return true; } return false; };
   const gstore = (k, init) => (games[k] ??= init);
+  // les trophées de NeoDex (3.4.8 et plus) : succès et records déclarés dans plugin.json ; sur un NeoDex plus ancien, rien ne se passe
+  const trophy = id => { ctx.games?.unlock(id).catch(() => {}); };
+  const trophyRecord = (id, v) => { if (v != null && Number.isFinite(+v)) ctx.games?.record(id, +v).catch(() => {}); };
 function gameLoop(st, appKey, update, draw) {
   cancelAnimationFrame(st.raf);
   const STEP = 1000 / 60; let acc = 0, last = performance.now();
@@ -494,6 +497,7 @@ function plMedal(g, x, y, [l, m, d]) {  // une médaille 24 × 24 : ruban et dis
   R.forEach((row, j) => { for (let i = 0; i < 12; i++) { const c = {r: '#ff4f6a', b: '#3f7aff', k: '#2a1408', m, l, d}[row[i]]; if (c) px(g, c, x + i * 2, y + j * 2, 2, 2); } });
 }
 function plInfo() {
+  setTimeout(plTrophies);
   const rows = [...PL_WORLDS.flatMap(w => [el('span', '', 'Record ' + w.name), el('b', '', String(games.best[w.id === 'prairie' ? 'plumo' : 'plumo-' + w.id] || 0))]), el('span', '', 'Parties'), el('b', '', String(pls.games)), el('span', '', 'Battements d’ailes'), el('b', '', String(pls.flaps))];
   $('plStats').replaceChildren(...rows);
   $('plBirds').replaceChildren(...BIRDS.map((B, i) => {  // les oiseaux : choisis d'un clic, ou cadenas avec la médaille qui les débloque
@@ -554,6 +558,13 @@ $('plCanvas').__pl = {st: () => pl, pls, birds: BIRDS, worlds: PL_WORLDS, info: 
   plNew(); pl.score = 9; plAdd(1); if (!pl.pop?.m) bad.push('pas de médaille au palier');
   console.assert(!bad.length, 'plumo', bad);
   Object.assign(pls, JSON.parse(keepS)); games.best = JSON.parse(keepBest); pl = keep; plMute = false; if (pl) plNew();
+}
+// les trophées, tirés des statistiques et des records gardés (aussi à l'ouverture : ce qui a été fait avant compte)
+function plTrophies() {
+  const r = PL_WORLDS.map(w => games.best[w.id === 'prairie' ? 'plumo' : 'plumo-' + w.id] || 0), sig = [pls.games, r.join(), JSON.stringify(pls.medals)].join(); if (sig === plTrophies.sig) return; plTrophies.sig = sig;
+  PL_WORLDS.forEach((w, i) => trophyRecord(w.id, r[i] || null));
+  if (pls.games >= 1) trophy('premier'); if (plHas('bronze')) trophy('bronze'); if (plHas('or')) trophy('or'); if (plHas('diamant')) trophy('diamant');
+  if (r.every(x => x >= 10)) trophy('mondes'); if (pls.games >= 100) trophy('cent');
 }
 ctx.onOpen(() => {
   if (!pl || !pl.g) { plNew(); pl.g = $('plCanvas').getContext('2d'); }
